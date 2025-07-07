@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordSmith - Stand N Stride</title>
+    <!-- Tailwind CSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font as requested */
+            background-color: #f0f2f5; /* Light grey background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to start to prevent content from being too centered vertically on short screens */
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            padding: 20px; /* Add some padding around the content */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px; /* Rounded corners for the main container */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            padding: 32px;
+            max-width: 800px; /* Max width for better readability */
+            width: 100%; /* Fluid width */
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            border: 1px solid #d1d5db; /* Light grey border */
+            border-radius: 8px; /* Rounded corners for input */
+            padding: 12px 16px;
+            font-size: 1rem;
+            width: 70%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6; /* Blue border on focus */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue shadow on focus */
+        }
+        button {
+            background-color: #11711C; /* Indigo button */
+            color: white;
+            border: none;
+            border-radius: 8px; /* Rounded corners for button */
+            padding: 12px 24px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            width: 100%; /* Full width on small screens */
+        }
+        button:hover {
+            background-color: #11711C; /* Darker indigo on hover */
+            transform: translateY(-1px); /* Slight lift on hover */
+            color: #ffffff;
+        }
+        button:active {
+            transform: translateY(0); /* Press effect */
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* Use separate to allow border-spacing */
+            border-spacing: 0 8px; /* Space between rows */
+            margin-top: 24px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-radius: 8px; /* Rounded corners for table cells */
+        }
+        th {
+            background-color: #e0e7ff; /* Light blue for header */
+            color: #3730a3; /* Darker blue text for header */
+            font-weight: 600;
+        }
+        td {
+            background-color: #f8fafc; /* Very light grey for table rows */
+            border: 1px solid #e2e8f0; /* Subtle border for cells */
+        }
+        tr:nth-child(even) td {
+            background-color: #f1f5f9; /* Slightly darker for even rows */
+        }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        .message.info {
+            background-color: #e0f2fe; /* Light blue */
+            color: #0284c7; /* Dark blue */
+        }
+        .message.error {
+            background-color: #fee2e2; /* Light red */
+            color: #dc2626; /* Dark red */
+        }
+        .message.success {
+            background-color: #dcfce7; /* Light green */
+            color: #16a34a; /* Dark green */
+        }
+
+        .cta_bg{
+                background: #F8F0B7;
+                padding: 0px 25px;
+                font-weight:  bold;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 640px) { /* Small screens and up */
+            .button-group {
+                display: flex;
+                gap: 16px; /* Space between input and button */
+            }
+            input[type="text"] {
+                flex-grow: 0.5; /* Input takes available space */
+            }
+            button {
+                width: auto; /* Button takes natural width */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="flex justify-center mb-6">
+            <!-- NGO Logo - Please replace this placeholder URL with your actual logo URL -->
+            <img src="https://drive.google.com/drive/u/1/folders/1VzJkBgHOqpmPcINAJLR1LnSZCOZKC6iU" alt="Stand N Stride Logo" class="h-12 w-auto rounded-md">
+        </div>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">WordSmith</h1>
+        <p class="text-center text-gray-600 mb-6">
+           Stand N Stride helps students learn English with Hindi meanings and example sentences for better understanding.
+        </p>
+
+        <div class="button-group flex flex-col sm:flex-row gap-4 mb-6">
+            <input type="text" id="wordInput" placeholder="Enter an English word (e.g., 'hello', 'learn')">
+            <button id="searchButton" class="cta_bg">Search Word</button>
+        </div>
+
+        <div id="messageDisplay" class="message hidden"></div>
+        <div id="definitionOutput">
+            <!-- Definition table will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <script type="module">
+        // Import necessary Firebase modules if Firestore was to be used.
+        // For this app, we are only using the Gemini API, so Firebase is not needed.
+
+        // Get references to HTML elements
+        const wordInput = document.getElementById('wordInput');
+        const searchButton = document.getElementById('searchButton');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const definitionOutput = document.getElementById('definitionOutput');
+
+        /**
+         * Displays a message to the user.
+         * @param {string} message - The message text.
+         * @param {'info'|'error'|'success'} type - The type of message (for styling).
+         */
+        function showMessage(message, type) {
+            messageDisplay.textContent = message;
+            messageDisplay.className = `message ${type}`; // Apply base and type-specific classes
+            messageDisplay.classList.remove('hidden'); // Make sure it's visible
+        }
+
+        /**
+         * Clears any displayed messages.
+         */
+        function clearMessage() {
+            messageDisplay.classList.add('hidden'); // Hide the message div
+            messageDisplay.textContent = ''; // Clear text content
+        }
+
+        /**
+         * Searches for the English word definition using the Gemini API.
+         */
+        async function searchWord() {
+            const word = wordInput.value.trim(); // Get word and remove whitespace
+
+            if (!word) {
+                showMessage('Please enter an English word.', 'error');
+                definitionOutput.innerHTML = ''; // Clear previous definition
+                return;
+            }
+
+            clearMessage();
+            showMessage('Searching for definition...', 'info');
+            definitionOutput.innerHTML = ''; // Clear previous definition
+
+            let chatHistory = [];
+            // Prompt the LLM to get the definition in the desired structured JSON format
+            const prompt = `Provide the Hindi meaning, English meaning, and a simple example sentence for the English word '${word}' in JSON format.
+            The JSON should have the following keys:
+            "word": (the English word you provided)
+            "hindiMeaning": (Hindi translation of the word)
+            "englishMeaning": (English definition of the word)
+            "exampleSentence": (a simple sentence using the word)
+            Ensure the example sentence is easy to understand for a student learning English.`;
+
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            // Define the expected JSON schema for the LLM response
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "word": { "type": "STRING" },
+                            "hindiMeaning": { "type": "STRING" },
+                            "englishMeaning": { "type": "STRING" },
+                            "exampleSentence": { "type": "STRING" }
+                        },
+                        // Ensure the order of properties in the response
+                        "propertyOrdering": ["word", "hindiMeaning", "englishMeaning", "exampleSentence"]
+                    }
+                }
+            };
+
+            // API key is left empty; Canvas will automatically provide it at runtime.
+            const apiKey = "AIzaSyBbxlaWwMjDJSkUzhhSXLs2aUR4Rr6XGDQ";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+
+                // Check if the response structure is as expected
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const definitionData = JSON.parse(jsonString);
+
+                    // Validate that all required fields are present in the parsed JSON
+                    if (definitionData.word && definitionData.hindiMeaning &&
+                        definitionData.englishMeaning && definitionData.exampleSentence) {
+                        displayDefinition(definitionData);
+                        showMessage('Definition found!', 'success');
+                    } else {
+                        throw new Error('Received incomplete or malformed data from the LLM.');
+                    }
+                } else {
+                    throw new Error('No valid content found in the LLM response.');
+                }
+
+            } catch (error) {
+                console.error('Error fetching definition:', error);
+                showMessage(`Could not find a definition or an error occurred: ${error.message}. Please try again or a different word.`, 'error');
+            }
+        }
+
+        /**
+         * Displays the word definition in a table format.
+         * @param {object} data - The definition data (word, hindiMeaning, englishMeaning, exampleSentence).
+         */
+        function displayDefinition(data) {
+            definitionOutput.innerHTML = `
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Word</th>
+                            <th>Hindi Meaning</th>
+                            <th>English Meaning</th>
+                            <th>Example Sentence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${data.word}</td>
+                            <td>${data.hindiMeaning}</td>
+                            <td>${data.englishMeaning}</td>
+                            <td>${data.exampleSentence}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Add event listener to the search button
+        searchButton.addEventListener('click', searchWord);
+
+        // Allow searching by pressing Enter in the input field
+        wordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                searchWord();
+            }
+        });
+
+        // Initial message to guide the user
+        window.onload = () => {
+            showMessage('Type an English word and click "Search Word" to get its definition.', 'info');
+        };
+
+    </script>
+</body>
+</html>
