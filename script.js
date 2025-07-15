@@ -57,6 +57,7 @@ async function searchWord() {
     let imageUrl = null;
     try {
         imageUrl = await fetchClipartImage(word);
+         console.log('1. Image URL returned by fetchClipartImage:', imageUrl); // ADD THIS LINE
     } catch (imageError) {
         console.warn("Could not fetch image for word:", word, imageError);
         // Don't block translation if image fails
@@ -154,6 +155,7 @@ async function fetchClipartImage(query) {
             throw new Error(`Pixabay API request failed with status ${response.status}`);
         }
         const data = await response.json();
+        console.log('2. Pixabay API raw response for query:', query, data); // ADD THIS LINE
 
         if (data.hits && data.hits.length > 0) {
             // Pick the first result's large image URL or webformatURL
