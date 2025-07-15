@@ -12,7 +12,8 @@ const wordInput = document.getElementById('wordInput');
 const searchButton = document.getElementById('searchButton');
 const messageDisplay = document.getElementById('messageDisplay');
 const definitionOutput = document.getElementById('definitionOutput');
-const imageDisplay = document.getElementById('imageDisplay'); // Reference to the image display div
+// Change 'const' to 'let' for imageDisplay because we'll reassign it
+let imageDisplay = document.getElementById('imageDisplay'); // Changed to 'let'
 
 
 /**
@@ -22,50 +23,51 @@ const imageDisplay = document.getElementById('imageDisplay'); // Reference to th
  */
 function showMessage(message, type) {
     messageDisplay.textContent = message;
-    messageDisplay.className = `message ${type}`; // Apply base and type-specific classes
-    messageDisplay.classList.remove('hidden'); // Make sure it's visible
+    messageDisplay.className = `message ${type}`;
+    messageDisplay.classList.remove('hidden');
 }
 
 /**
  * Clears any displayed messages.
  */
 function clearMessage() {
-    messageDisplay.classList.add('hidden'); // Hide the message div
-    messageDisplay.textContent = ''; // Clear text content
+    messageDisplay.classList.add('hidden');
+    messageDisplay.textContent = '';
 }
 
 /**
  * Searches for the English word definition using the Gemini API.
  */
 async function searchWord() {
-    const word = wordInput.value.trim(); // Get word and remove whitespace
+    const word = wordInput.value.trim();
 
     if (!word) {
         showMessage('Please enter an English word.', 'error');
-        definitionOutput.innerHTML = '<div id="imageDisplay"></div>'; // Clear previous definition and keep image div
-        imageDisplay.innerHTML = ''; // Clear image
+        // RE-SET AND RE-GET imageDisplay HERE for initial clear state
+        definitionOutput.innerHTML = '<div id="imageDisplay"></div>';
+        imageDisplay = document.getElementById('imageDisplay'); // <--- RE-GET REFERENCE
+        imageDisplay.innerHTML = '';
         return;
     }
 
     clearMessage();
     showMessage('Searching for definition and image...', 'info');
-    definitionOutput.innerHTML = '<div id="imageDisplay"></div>'; // Clear previous definition and keep image div
-    imageDisplay.innerHTML = ''; // Clear image
+
+    // RE-SET AND RE-GET imageDisplay HERE for search state
+    definitionOutput.innerHTML = '<div id="imageDisplay"></div>';
+    imageDisplay = document.getElementById('imageDisplay'); // <--- RE-GET REFERENCE
+    imageDisplay.innerHTML = '';
 
 
-    // --- NEW: Fetch image concurrently with translation ---
     let imageUrl = null;
     try {
         imageUrl = await fetchClipartImage(word);
-         console.log('1. Image URL returned by fetchClipartImage:', imageUrl); // ADD THIS LINE
+        console.log('1. Image URL returned by fetchClipartImage:', imageUrl);
     } catch (imageError) {
         console.warn("Could not fetch image for word:", word, imageError);
-        // Don't block translation if image fails
     }
-    // --- END NEW ---
 
     let chatHistory = [];
-    // Prompt the LLM to get the definition in the desired structured JSON format
     const prompt = `Provide the Hindi meaning, English meaning, and a simple example sentence for the English word '${word}' in JSON format.
     The JSON should have the following keys:
     "word": (the English word you provided)
@@ -76,7 +78,6 @@ async function searchWord() {
 
     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
-    // Define the expected JSON schema for the LLM response
     const payload = {
         contents: chatHistory,
         generationConfig: {
@@ -89,7 +90,6 @@ async function searchWord() {
                     "englishMeaning": { "type": "STRING" },
                     "exampleSentence": { "type": "STRING" }
                 },
-                // Ensure the order of properties in the response
                 "propertyOrdering": ["word", "hindiMeaning", "englishMeaning", "exampleSentence"]
             }
         }
@@ -111,7 +111,6 @@ async function searchWord() {
 
         const result = await response.json();
 
-        // Check if the response structure is as expected
         if (result.candidates && result.candidates.length > 0 &&
             result.candidates[0].content && result.candidates[0].content.parts &&
             result.candidates[0].content.parts.length > 0) {
@@ -119,10 +118,9 @@ async function searchWord() {
             const jsonString = result.candidates[0].content.parts[0].text;
             const definitionData = JSON.parse(jsonString);
 
-            // Validate that all required fields are present in the parsed JSON
             if (definitionData.word && definitionData.hindiMeaning &&
                 definitionData.englishMeaning && definitionData.exampleSentence) {
-                displayDefinition(definitionData, imageUrl); // Pass imageUrl to display function
+                displayDefinition(definitionData, imageUrl);
                 showMessage('Definition and image found!', 'success');
             } else {
                 throw new Error('Received incomplete or malformed data from the LLM.');
@@ -137,17 +135,15 @@ async function searchWord() {
     }
 }
 
-
-// --- NEW ASYNC FUNCTION TO FETCH IMAGE FROM PIXABAY ---
 async function fetchClipartImage(query) {
     if (!PIXABAY_API_KEY || PIXABAY_API_KEY === "YOUR_PIXABAY_API_KEY_HERE") {
         console.error("Pixabay API key is not set. Please get one from pixabay.com/api/docs/");
         return null;
     }
 
-    // Construct Pixabay API URL
-    // search for "vectors" (clipart), order by popular, safe search, and short_url for direct image link
     const pixabayUrl = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&image_type=vector&orientation=horizontal&safesearch=true&per_page=3&pretty=true`;
+
+    console.log('Pixabay API request URL:', pixabayUrl);
 
     try {
         const response = await fetch(pixabayUrl);
@@ -155,13 +151,12 @@ async function fetchClipartImage(query) {
             throw new Error(`Pixabay API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        console.log('2. Pixabay API raw response for query:', query, data); // ADD THIS LINE
+        console.log('2. Pixabay API raw response for query:', query, data);
 
         if (data.hits && data.hits.length > 0) {
-            // Pick the first result's large image URL or webformatURL
-            return data.hits[0].webformatURL; // webformatURL is often a good size for display
+            return data.hits[0].webformatURL;
         } else {
-            console.log(`No clipart found on Pixabay for "${query}"`);
+            console.log(`3. No clipart hits found on Pixabay for "${query}"`);
             return null;
         }
     } catch (error) {
@@ -169,8 +164,6 @@ async function fetchClipartImage(query) {
         return null;
     }
 }
-// --- END NEW ASYNC FUNCTION ---
-
 
 /**
  * Displays the word definition in a table format and includes a pictorial representation.
@@ -179,12 +172,15 @@ async function fetchClipartImage(query) {
  */
 function displayDefinition(data, imageUrl) {
     // Clear previous content in imageDisplay before adding new image
+    // This is correct as imageDisplay now points to the current, valid element
     imageDisplay.innerHTML = '';
+
     if (imageUrl) {
         imageDisplay.innerHTML = `<img src="${imageUrl}" alt="${data.word} clipart">`;
     }
 
-    // Display the definition table in definitionOutput (which already contains imageDisplay div)
+    // Display the definition table.
+    // Ensure this just appends to definitionOutput, which now correctly contains the new imageDisplay
     definitionOutput.innerHTML += `
         <table class="min-w-full">
             <thead>
