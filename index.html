@@ -4,20 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordSmith - Stand N Stride</title>
-    <!-- Tailwind CSS CDN for easy styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for the app */
         body {
             font-family: 'Inter', sans-serif; /* Using Inter font as requested */
             background-color: #f0f2f5; /* Light grey background */
-            /* --- IMPORTANT RESPONSIVENESS CHANGES START HERE --- */
-            /* Removed flexbox centering and min-height from body */
-            /* These can cause issues when embedded in an iframe by forcing its size */
-            margin: 0; /* Remove default body margin to prevent extra space */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to start to prevent content from being too centered vertically on short screens */
+            min-height: 100vh; /* Ensure it takes full viewport height */
             padding: 20px; /* Add some padding around the content */
             box-sizing: border-box; /* Include padding in element's total width and height */
-            /* --- IMPORTANT RESPONSIVENESS CHANGES END HERE --- */
         }
         .container {
             background-color: #ffffff;
@@ -25,16 +23,15 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
             padding: 32px;
             max-width: 800px; /* Max width for better readability */
-            width: 100%; /* Fluid width: container will always take 100% of available space up to max-width */
+            width: 100%; /* Fluid width */
             box-sizing: border-box;
-            margin: 0 auto; /* Center the container horizontally within the available space */
         }
         input[type="text"] {
             border: 1px solid #d1d5db; /* Light grey border */
             border-radius: 8px; /* Rounded corners for input */
             padding: 12px 16px;
             font-size: 1rem;
-            width: 100%; /* Make input 100% width by default, stacks on small screens */
+            width: 70%;
             box-sizing: border-box;
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
@@ -44,7 +41,7 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue shadow on focus */
         }
         button {
-            background-color: #11711C; /* Dark Green button */
+            background-color: #11711C; /* Indigo button */
             color: white;
             border: none;
             border-radius: 8px; /* Rounded corners for button */
@@ -52,11 +49,10 @@
             font-size: 1rem;
             cursor: pointer;
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            width: 100%; /* Full width on small screens, stacks below input */
-            display: block; /* Ensures button takes full width and stacks on small screens */
+            width: 100%; /* Full width on small screens */
         }
         button:hover {
-            background-color: #0c5a15; /* Darker green on hover */
+            background-color: #11711C; /* Darker indigo on hover */
             transform: translateY(-1px); /* Slight lift on hover */
             color: #ffffff;
         }
@@ -68,15 +64,11 @@
             border-collapse: separate; /* Use separate to allow border-spacing */
             border-spacing: 0 8px; /* Space between rows */
             margin-top: 24px;
-            /* Allow table columns to shrink on small screens */
-            table-layout: fixed; /* Fix table layout to distribute width */
         }
         th, td {
-            padding: 12px 8px; /* Reduced horizontal padding for table cells on small screens */
+            padding: 12px 16px;
             text-align: left;
             border-radius: 8px; /* Rounded corners for table cells */
-            word-wrap: break-word; /* Break long words to prevent overflow */
-            overflow-wrap: break-word; /* Standard property for word wrapping */
         }
         th {
             background-color: #e0e7ff; /* Light blue for header */
@@ -110,35 +102,35 @@
             color: #16a34a; /* Dark green */
         }
 
-        /* Custom CTA button background - adjusted to match hover */
-        .cta_bg {
-            background: #F8F0B7; /* Light yellow */
-            color: #11711C; /* Dark green text for CTA button */
-            padding: 12px 24px; /* Consistent padding */
-            font-weight: bold;
-        }
-        .cta_bg:hover {
-            background: #e0d8a2; /* Slightly darker yellow on hover */
-            color: #0c5a15; /* Darker green text on hover */
+        .cta_bg{
+                background: #F8F0B7;
+                padding: 0px 25px;
+                font-weight:  bold;
         }
 
+        /* Styles for the image display */
+        #imageDisplay {
+            text-align: center;
+            margin-bottom: 20px; /* Space between image and definition table */
+        }
+        #imageDisplay img {
+            max-width: 200px; /* Max width for images */
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
 
-        /* Responsive adjustments for larger screens (640px and up) */
-        @media (min-width: 640px) {
+        /* Responsive adjustments */
+        @media (min-width: 640px) { /* Small screens and up */
             .button-group {
-                display: flex; /* Use flexbox to put input and button side-by-side */
+                display: flex;
                 gap: 16px; /* Space between input and button */
             }
             input[type="text"] {
-                flex-grow: 1; /* Input takes up most of the space */
-                width: auto; /* Override 100% width for flex behavior */
+                flex-grow: 0.5; /* Input takes available space */
             }
             button {
                 width: auto; /* Button takes natural width */
-                display: inline-block; /* Revert to inline-block for flex */
-            }
-            th, td {
-                padding: 12px 16px; /* Restore original padding for larger screens */
             }
         }
     </style>
@@ -146,9 +138,7 @@
 <body>
     <div class="container">
         <div class="flex justify-center mb-6">
-            <!-- NGO Logo - Please replace this placeholder URL with your actual logo URL -->
-            <!-- Example: <img src="https://standnstride.org/wp-content/uploads/2023/12/logo-light.png" alt="Stand N Stride Logo" class="h-12 w-auto rounded-md"> -->
-            <img src="https://standnstride.org/wp-content/uploads/2020/12/logo-1.png" alt="Stand N Stride Logo" class="h-12 w-auto rounded-md">
+            <img src="https://via.placeholder.com/100x50?text=Your+Logo+Here" alt="Stand N Stride Logo" class="h-12 w-auto rounded-md">
         </div>
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">WordSmith</h1>
         <p class="text-center text-gray-600 mb-6">
@@ -162,171 +152,10 @@
 
         <div id="messageDisplay" class="message hidden"></div>
         <div id="definitionOutput">
-            <!-- Definition table will be inserted here by JavaScript -->
-        </div>
+            <div id="imageDisplay"></div>
+            </div>
     </div>
 
-    <script type="module">
-        // Get references to HTML elements
-        const wordInput = document.getElementById('wordInput');
-        const searchButton = document.getElementById('searchButton');
-        const messageDisplay = document.getElementById('messageDisplay');
-        const definitionOutput = document.getElementById('definitionOutput');
-
-        /**
-         * Displays a message to the user.
-         * @param {string} message - The message text.
-         * @param {'info'|'error'|'success'} type - The type of message (for styling).
-         */
-        function showMessage(message, type) {
-            messageDisplay.textContent = message;
-            messageDisplay.className = `message ${type}`; // Apply base and type-specific classes
-            messageDisplay.classList.remove('hidden'); // Make sure it's visible
-        }
-
-        /**
-         * Clears any displayed messages.
-         */
-        function clearMessage() {
-            messageDisplay.classList.add('hidden'); // Hide the message div
-            messageDisplay.textContent = ''; // Clear text content
-        }
-
-        /**
-         * Searches for the English word definition using the Gemini API.
-         */
-        async function searchWord() {
-            const word = wordInput.value.trim(); // Get word and remove whitespace
-
-            if (!word) {
-                showMessage('Please enter an English word.', 'error');
-                definitionOutput.innerHTML = ''; // Clear previous definition
-                return;
-            }
-
-            clearMessage();
-            showMessage('Searching for definition...', 'info');
-            definitionOutput.innerHTML = ''; // Clear previous definition
-
-            let chatHistory = [];
-            // Prompt the LLM to get the definition in the desired structured JSON format
-            const prompt = `Provide the Hindi meaning, English meaning, and a simple example sentence for the English word '${word}' in JSON format.
-            The JSON should have the following keys:
-            "word": (the English word you provided)
-            "hindiMeaning": (Hindi translation of the word)
-            "englishMeaning": (English definition of the word)
-            "exampleSentence": (a simple sentence using the word)
-            Ensure the example sentence is easy to understand for a student learning English.`;
-
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
-            // Define the expected JSON schema for the LLM response
-            const payload = {
-                contents: chatHistory,
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "word": { "type": "STRING" },
-                            "hindiMeaning": { "type": "STRING" },
-                            "englishMeaning": { "type": "STRING" },
-                            "exampleSentence": { "type": "STRING" }
-                        },
-                        // Ensure the order of properties in the response
-                        "propertyOrdering": ["word", "hindiMeaning", "englishMeaning", "exampleSentence"]
-                    }
-                }
-            };
-
-            // API key is left empty; Canvas will automatically provide it at runtime.
-            // IMPORTANT: If embedding in Google Sites, you MUST provide your own API key here.
-            // Replace "YOUR_API_KEY_HERE" with your actual Google Cloud API Key.
-            const apiKey = "AIzaSyBbxlaWwMjDJSkUzhhSXLs2aUR4Rr6XGDQ"; // <--- YOUR API KEY GOES HERE
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API request failed with status ${response.status}: ${errorText}`);
-                }
-
-                const result = await response.json();
-
-                // Check if the response structure is as expected
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-
-                    const jsonString = result.candidates[0].content.parts[0].text;
-                    const definitionData = JSON.parse(jsonString);
-
-                    // Validate that all required fields are present in the parsed JSON
-                    if (definitionData.word && definitionData.hindiMeaning &&
-                        definitionData.englishMeaning && definitionData.exampleSentence) {
-                        displayDefinition(definitionData);
-                        showMessage('Definition found!', 'success');
-                    } else {
-                        throw new Error('Received incomplete or malformed data from the LLM.');
-                    }
-                } else {
-                    throw new Error('No valid content found in the LLM response.');
-                }
-
-            } catch (error) {
-                console.error('Error fetching definition:', error);
-                showMessage(`Could not find a definition or an error occurred: ${error.message}. Please try again or a different word.`, 'error');
-            }
-        }
-
-        /**
-         * Displays the word definition in a table format.
-         * @param {object} data - The definition data (word, hindiMeaning, englishMeaning, exampleSentence).
-         */
-        function displayDefinition(data) {
-            definitionOutput.innerHTML = `
-                <table class="min-w-full">
-                    <thead>
-                        <tr>
-                            <th>Word</th>
-                            <th>Hindi Meaning</th>
-                            <th>English Meaning</th>
-                            <th>Example Sentence</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>${data.word}</td>
-                            <td>${data.hindiMeaning}</td>
-                            <td>${data.englishMeaning}</td>
-                            <td>${data.exampleSentence}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            `;
-        }
-
-        // Add event listener to the search button
-        searchButton.addEventListener('click', searchWord);
-
-        // Allow searching by pressing Enter in the input field
-        wordInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                searchWord();
-            }
-        });
-
-        // Initial message to guide the user
-        window.onload = () => {
-            showMessage('Type an English word and click "Search Word" to get its definition.', 'info');
-        };
-
-    </script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
