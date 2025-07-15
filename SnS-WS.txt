@@ -1,14 +1,18 @@
 // IMPORTANT: Replace with your actual Gemini API key.
 // Ensure this API key has no HTTP referrer restrictions for GitHub Pages,
 // or add "https://varun-1109.github.io/*" as an allowed HTTP referrer in Google Cloud Console.
-const API_KEY = "AIzaSyBbxlaWwMjDJSkUzhhSXLs2aUR4Rr6XGDQ";
+const GEMINI_API_KEY = "AIzaSyBbxlaWwMjDJSkUzhhSXLs2aUR4Rr6XGDQ";
+
+// --- NEW: Pixabay API Key (Replace with your actual key from Pixabay!) ---
+const PIXABAY_API_KEY = "51329430-f7cd0022fd4c0720917ac9423"; // <--- GET THIS FROM PIXABAY.COM/API/DOCS
+// --- END NEW ---
 
 // Get references to HTML elements
 const wordInput = document.getElementById('wordInput');
 const searchButton = document.getElementById('searchButton');
 const messageDisplay = document.getElementById('messageDisplay');
 const definitionOutput = document.getElementById('definitionOutput');
-const imageDisplay = document.getElementById('imageDisplay'); // New: Reference to the image display div
+const imageDisplay = document.getElementById('imageDisplay'); // Reference to the image display div
 
 
 /**
@@ -44,9 +48,20 @@ async function searchWord() {
     }
 
     clearMessage();
-    showMessage('Searching for definition...', 'info');
+    showMessage('Searching for definition and image...', 'info');
     definitionOutput.innerHTML = '<div id="imageDisplay"></div>'; // Clear previous definition and keep image div
     imageDisplay.innerHTML = ''; // Clear image
+
+
+    // --- NEW: Fetch image concurrently with translation ---
+    let imageUrl = null;
+    try {
+        imageUrl = await fetchClipartImage(word);
+    } catch (imageError) {
+        console.warn("Could not fetch image for word:", word, imageError);
+        // Don't block translation if image fails
+    }
+    // --- END NEW ---
 
     let chatHistory = [];
     // Prompt the LLM to get the definition in the desired structured JSON format
@@ -79,10 +94,10 @@ async function searchWord() {
         }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
-        const response = await fetch(apiUrl, {
+        const response = await fetch(geminiApiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -106,8 +121,8 @@ async function searchWord() {
             // Validate that all required fields are present in the parsed JSON
             if (definitionData.word && definitionData.hindiMeaning &&
                 definitionData.englishMeaning && definitionData.exampleSentence) {
-                displayDefinition(definitionData);
-                showMessage('Definition found!', 'success');
+                displayDefinition(definitionData, imageUrl); // Pass imageUrl to display function
+                showMessage('Definition and image found!', 'success');
             } else {
                 throw new Error('Received incomplete or malformed data from the LLM.');
             }
@@ -121,41 +136,46 @@ async function searchWord() {
     }
 }
 
-/**
- * Returns a direct URL for a clipart image from Openclipart based on the word.
- * This function uses a manual mapping for demonstration. You would expand this map
- * for more words or integrate a dynamic image search if an API was available.
- *
- * IMPORTANT: Always respect licenses for images. Openclipart images are generally
- * public domain, but always verify.
- * @param {string} word - The English word.
- * @returns {string|null} - The URL of the image or null if not found.
- */
-function getImageForWord(word) {
-    const lowerCaseWord = word.toLowerCase();
-    const imageMap = {
-        "apple": "https://openclipart.org/image/800px/212623", // Example: A red apple
-        "dog": "https://openclipart.org/image/800px/204739", // Example: A simple dog outline
-        "cat": "https://openclipart.org/image/800px/222921", // Example: A cartoon cat
-        "sun": "https://openclipart.org/image/800px/191599", // Example: A smiling sun
-        "book": "https://openclipart.org/image/800px/107775", // Example: An open book
-        "car": "https://openclipart.org/image/800px/292025", // Example: A simple car
-        "house": "https://openclipart.org/image/800px/32187", // Example: A house
-        "tree": "https://openclipart.org/image/800px/168172", // Example: A tree
-        // Add more words and their corresponding Openclipart URLs here
-    };
-    return imageMap[lowerCaseWord] || null;
+
+// --- NEW ASYNC FUNCTION TO FETCH IMAGE FROM PIXABAY ---
+async function fetchClipartImage(query) {
+    if (!PIXABAY_API_KEY || PIXABAY_API_KEY === "YOUR_PIXABAY_API_KEY_HERE") {
+        console.error("Pixabay API key is not set. Please get one from pixabay.com/api/docs/");
+        return null;
+    }
+
+    // Construct Pixabay API URL
+    // search for "vectors" (clipart), order by popular, safe search, and short_url for direct image link
+    const pixabayUrl = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&image_type=vector&orientation=horizontal&safesearch=true&per_page=3&pretty=true`;
+
+    try {
+        const response = await fetch(pixabayUrl);
+        if (!response.ok) {
+            throw new Error(`Pixabay API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.hits && data.hits.length > 0) {
+            // Pick the first result's large image URL or webformatURL
+            return data.hits[0].webformatURL; // webformatURL is often a good size for display
+        } else {
+            console.log(`No clipart found on Pixabay for "${query}"`);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching clipart from Pixabay:", error);
+        return null;
+    }
 }
+// --- END NEW ASYNC FUNCTION ---
 
 
 /**
  * Displays the word definition in a table format and includes a pictorial representation.
  * @param {object} data - The definition data (word, hindiMeaning, englishMeaning, exampleSentence).
+ * @param {string|null} imageUrl - The URL of the image to display, or null if none.
  */
-function displayDefinition(data) {
-    // Get image URL
-    const imageUrl = getImageForWord(data.word);
-
+function displayDefinition(data, imageUrl) {
     // Clear previous content in imageDisplay before adding new image
     imageDisplay.innerHTML = '';
     if (imageUrl) {
@@ -197,5 +217,5 @@ wordInput.addEventListener('keypress', (event) => {
 
 // Initial message to guide the user
 window.onload = () => {
-    showMessage('Type an English word and click "Search Word" to get its definition.', 'info');
+    showMessage('Type an English word and click "Search Word" to get its definition and a picture.', 'info');
 };
